@@ -1,0 +1,8 @@
+result/
+bert-base-uncased/
+sup-simcse-bert-base-uncased/
+data/
+demo/
+SentEval/
+*.log
+__pycache__/
