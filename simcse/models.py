@@ -120,7 +120,7 @@ def cl_forward(cls,
     # Flatten input for encoding
     input_ids = input_ids.view((-1, input_ids.size(-1))) # (bs * num_sent, len)
     attention_mask = attention_mask.view((-1, attention_mask.size(-1))) # (bs * num_sent len)
-    if token_type_ids is not None:
+    if token_type_ids is not None: #这个是什么
         token_type_ids = token_type_ids.view((-1, token_type_ids.size(-1))) # (bs * num_sent, len)
 
     # Get raw embeddings

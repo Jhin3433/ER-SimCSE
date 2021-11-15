@@ -394,7 +394,7 @@ def main():
         # Pair datasets
         sent0_cname = column_names[0]
         sent1_cname = column_names[1]
-    elif len(column_names) == 3:
+    elif len(column_names) == 3 or len(column_names) == 6:
         # Pair datasets with hard negatives
         sent0_cname = column_names[0]
         sent1_cname = column_names[1]
