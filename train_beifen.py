@@ -35,7 +35,7 @@ from transformers.trainer_utils import is_main_process
 from transformers.data.data_collator import DataCollatorForLanguageModeling
 from transformers.file_utils import cached_property, torch_required, is_torch_available, is_torch_tpu_available
 from simcse.models import RobertaForCL, BertForCL
-from simcse.trainers import CLTrainer,Event_CLTrainer
+from simcse.trainers import CLTrainer
 
 logger = logging.getLogger(__name__)
 MODEL_CONFIG_CLASSES = list(MODEL_FOR_MASKED_LM_MAPPING.keys())
@@ -407,6 +407,7 @@ def main():
         raise NotImplementedError
 
     def prepare_features(examples):
+        #####为什么是一列两个两个处理的？
         # padding = longest (default)
         #   If no sentence in the batch exceed the max length, then use
         #   the max sentence length in the batch, otherwise use the 
@@ -437,7 +438,7 @@ def main():
             max_length=data_args.max_seq_length,
             truncation=True,
             padding="max_length" if data_args.pad_to_max_length else False,
-        )
+        )#还没有padding
 
         features = {}
         if sent2_cname is not None:
@@ -473,13 +474,13 @@ def main():
             special_keys = ['input_ids', 'attention_mask', 'token_type_ids', 'mlm_input_ids', 'mlm_labels']
             bs = len(features)
             if bs > 0:
-                num_sent = len(features[0]['input_ids'])
+                num_sent = len(features[0]['input_ids'])#一个sample的句子数
             else:
                 return
             flat_features = []
             for feature in features:
                 for i in range(num_sent):
-                    flat_features.append({k: feature[k][i] if k in special_keys else feature[k] for k in feature})
+                    flat_features.append({k: feature[k][i] if k in special_keys else feature[k] for k in feature})#len(features) = batch_size, len(flat_features) = batch_size * 3
 
             batch = self.tokenizer.pad(
                 flat_features,
@@ -491,7 +492,7 @@ def main():
             if model_args.do_mlm:
                 batch["mlm_input_ids"], batch["mlm_labels"] = self.mask_tokens(batch["input_ids"])
 
-            batch = {k: batch[k].view(bs, num_sent, -1) if k in special_keys else batch[k].view(bs, num_sent, -1)[:, 0] for k in batch}
+            batch = {k: batch[k].view(bs, num_sent, -1) if k in special_keys else batch[k].view(bs, num_sent, -1)[:, 0] for k in batch}# {"input_ids":(batch,sent_num,padding_length)}
 
             if "label" in batch:
                 batch["labels"] = batch["label"]
@@ -539,20 +540,13 @@ def main():
 #---------------------------------------数据集处理------------------------------------------------------------------------------------------------
 
 #---------------------------------------训练------------------------------------------------------------------------------------------------
-    trainer = Event_CLTrainer(
+    trainer = CLTrainer(
         model=model,
         args=training_args,
         train_dataset=train_dataset if training_args.do_train else None,
         tokenizer=tokenizer,
         data_collator=data_collator,
     )
-    # trainer = CLTrainer(
-    #     model=model,
-    #     args=training_args,
-    #     train_dataset=train_dataset if training_args.do_train else None,
-    #     tokenizer=tokenizer,
-    #     data_collator=data_collator,
-    # )
     trainer.model_args = model_args
 
     # Training

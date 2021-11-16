@@ -290,7 +290,7 @@ class CLTrainer(Trainer):
         # total number of training steps to execute: max_steps
         #设置 梯度更新step数
         if train_dataset_is_sized:
-            num_update_steps_per_epoch = len(train_dataloader) // self.args.gradient_accumulation_steps #2154 / 1 = 2154
+            num_update_steps_per_epoch = len(train_dataloader) // self.args.gradient_accumulation_steps #2154 / 1 = 2154  len(train_dataloder) == train_samples / batch_size
             num_update_steps_per_epoch = max(num_update_steps_per_epoch, 1) # 2154
             if self.args.max_steps > 0:
                 max_steps = self.args.max_steps
@@ -445,7 +445,7 @@ class CLTrainer(Trainer):
             if self.args.past_index >= 0:
                 self._past = None
 
-            steps_in_epoch = len(train_dataloader) if train_dataset_is_sized else self.args.max_steps
+            steps_in_epoch = len(train_dataloader) if train_dataset_is_sized else self.args.max_steps #数据集量
             self.control = self.callback_handler.on_epoch_begin(self.args, self.state, self.control)
 
             assert train_dataset_is_sized, "currently we only support sized dataloader!"
@@ -631,8 +631,8 @@ class Event_CLTrainer(CLTrainer):
 
                 metrics = {"Hard_Similarity_num_correct" : num_correct}
                 self.log(num_correct)
-            elif task == 'Script Event Predictions':
-                logging.debug('\n\n***** Eval task : Script Event Predictions*****\n\n')
-                pass
+            # elif task == 'Script Event Predictions':
+            #     logging.debug('\n\n***** Eval task : Script Event Predictions*****\n\n')
+            #     pass
     
         return metrics
