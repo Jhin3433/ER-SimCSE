@@ -7,7 +7,7 @@ from typing import Optional, Union, List, Dict, Tuple
 import torch
 import collections
 import random
-
+import numpy as np
 from datasets import load_dataset
 
 import transformers
@@ -438,6 +438,27 @@ def main():
             truncation=True,
             padding="max_length" if data_args.pad_to_max_length else False,
         )
+#----------------------------------------添加verb位置索引#----------------------------------------
+        def lookup(element, list_test):
+            index = []
+            current_pos = 0
+            for _ in range(list_test.count(element)):
+                new_list = list_test[current_pos:]
+                _index = new_list.index(element)
+                index.append(current_pos + _index)
+                current_pos += new_list.index(element)+1
+            return index
+        def match(subword_index, sentence_index):
+            start = lookup(subword_index[0], sentence_index)[-1] #subword_index[0]只查到第一个词，末尾[-1]返回最后一次出现位置
+            length = len(subword_index)
+            return [start, length]
+        sent_features['verb_location'] = []
+        for index, sentence in enumerate(sentences):
+            token = sentence.strip().split(' ')[-1].strip('.')  # 按照空格进行分词
+            subword = tokenizer(token)['input_ids'][1:-1]
+            match_result = match(subword, sent_features['input_ids'][index])
+            sent_features['verb_location'].append(match_result * int(data_args.max_seq_length / 2))
+#----------------------------------------添加verb位置索引#----------------------------------------     
 
         features = {}
         if sent2_cname is not None:
@@ -446,7 +467,7 @@ def main():
         else:
             for key in sent_features:
                 features[key] = [[sent_features[key][i], sent_features[key][i+total]] for i in range(total)]
-            
+              
         return features
 
     if training_args.do_train:
@@ -469,8 +490,8 @@ def main():
         mlm: bool = True
         mlm_probability: float = data_args.mlm_probability
 
-        def __call__(self, features: List[Dict[str, Union[List[int], List[List[int]], torch.Tensor]]]) -> Dict[str, torch.Tensor]:
-            special_keys = ['input_ids', 'attention_mask', 'token_type_ids', 'mlm_input_ids', 'mlm_labels']
+        def __call__(self, features: List[Dict[str, Union[ List[int], List[List[int]], torch.Tensor]] ]) -> Dict[str, torch.Tensor]:
+            special_keys = ['input_ids', 'attention_mask', 'token_type_ids', 'verb_index' 'mlm_input_ids', 'mlm_labels']
             bs = len(features)
             if bs > 0:
                 num_sent = len(features[0]['input_ids'])
@@ -553,7 +574,7 @@ def main():
     #     tokenizer=tokenizer,
     #     data_collator=data_collator,
     # )
-    trainer.model_args = model_args
+    # trainer.model_args = model_args
 
     # Training
     if training_args.do_train:

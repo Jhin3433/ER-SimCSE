@@ -57,6 +57,7 @@ from torch.utils.data.dataset import Dataset
 from torch.utils.data.distributed import DistributedSampler
 from torch.utils.data.sampler import RandomSampler, SequentialSampler
 
+
 if is_torch_tpu_available():
     import torch_xla.core.xla_model as xm
     import torch_xla.debug.metrics as met
@@ -78,10 +79,10 @@ import copy
 # Set path to SentEval
 PATH_TO_SENTEVAL = './SentEval'
 PATH_TO_DATA = './SentEval/data'
-
 # Import SentEval
 sys.path.insert(0, PATH_TO_SENTEVAL)
 import senteval
+
 import numpy as np
 from datetime import datetime
 from filelock import FileLock
@@ -572,27 +573,28 @@ class dotdict(dict):
     __delattr__ = dict.__delitem__
 
 class Event_CLTrainer(CLTrainer):
-    def load_hard_similarity_dataset(path = '../event/resource/hard.txt'):
+    def load_hard_similarity_dataset(self, path = './event/resource/hard.txt'):
         x_A = []
         x_B = []
         y = []
-        for line in open(path): 
+        for line in open(path):  
             pos_event1 = line.strip('\n').split('|')[0].strip(' ') + ' ' + line.strip('\n').split('|')[1].strip(' ') + ' ' + line.strip('\n').split('|')[2].strip(' ')
             pos_event2 = line.strip('\n').split('|')[3].strip(' ') + ' ' + line.strip('\n').split('|')[4].strip(' ') + ' ' + line.strip('\n').split('|')[5].strip(' ')
             x_A.append(pos_event1)
             x_B.append(pos_event2)
             y.append(1)
-            neg_event1 = line.strip('\n').split('|')[6].strip(' ') + ' ' + line.strip('\n').split('|')[7].strip(' ') + ' ' + line.strip('\n').split('|')[9].strip(' ')
+            neg_event1 = line.strip('\n').split('|')[6].strip(' ') + ' ' + line.strip('\n').split('|')[7].strip(' ') + ' ' + line.strip('\n').split('|')[8].strip(' ')
             neg_event2 = line.strip('\n').split('|')[9].strip(' ') + ' ' + line.strip('\n').split('|')[10].strip(' ') + ' ' + line.strip('\n').split('|')[11].strip(' ')
             x_A.append(neg_event1)
             x_B.append(neg_event2)
             y.append(0)
         return (x_A, x_B, y)
 
+
     def evaluate(
         self,
+        eval_senteval_transfer: bool = False,
     ) -> Dict[str, float]:
-
 
         params = {'batch_size': 128}
         params = dotdict(params)
@@ -603,11 +605,12 @@ class Event_CLTrainer(CLTrainer):
         self.model.eval()
         for task in tasks:
             if task == 'Hard Similarity':
-                logging.debug('\n\n***** Eval task : Hard Similarity*****\n\n')
+                logger.info('\n\n***** Eval task : Hard Similarity*****\n\n')
+                cosine_similarity = nn.CosineSimilarity(dim=0)
                 input1, input2, gs_scores = self.load_hard_similarity_dataset()
                 pred_scores = []
                 for ii in range(0, len(gs_scores), params.batch_size):
-                    batch1 = input1[ii:ii + params.batch_size] #batch1[0] 和batch[2]是一对
+                    batch1 = input1[ii:ii + params.batch_size] #batch1[0] 和batch2[0]是一对
                     batch2 = input2[ii:ii + params.batch_size]
                     if len(batch1) == len(batch2) and len(batch1) > 0:
                         batch1 = self.tokenizer.batch_encode_plus(batch1, return_tensors='pt', padding=True)
@@ -621,18 +624,19 @@ class Event_CLTrainer(CLTrainer):
                         pooler_output1 = outputs1.pooler_output.cpu()
                         outputs2 = self.model(**batch2, output_hidden_states=True, return_dict=True, sent_emb=True)
                         pooler_output2 = outputs2.pooler_output.cpu()
+                    
                     for kk in range(pooler_output2.shape[0]):
-                        pred_score = self.similarity(pooler_output1[kk], pooler_output2[kk])
+                        pred_score = cosine_similarity(pooler_output1[kk], pooler_output2[kk])
+                        # pred_score = self.similarity(pooler_output1[kk], pooler_output2[kk])
                         pred_scores.append(pred_score)
                 num_correct = 0
                 for jj in range(0,len(pred_scores),2):
                     if pred_scores[jj] > pred_scores[jj + 1]:
                         num_correct += 1
 
-                metrics = {"Hard_Similarity_num_correct" : num_correct}
-                self.log(num_correct)
+                metrics = {"Hard_Similarity_num_correct" : float(num_correct / (len(pred_scores) / 2) )}
+                self.log(metrics)
             # elif task == 'Script Event Predictions':
             #     logging.debug('\n\n***** Eval task : Script Event Predictions*****\n\n')
             #     pass
-    
         return metrics

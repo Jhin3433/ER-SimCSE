@@ -32,13 +32,15 @@
             // ]
             "args": [
                 // model_args
-                "--model_name_or_path","bert-base-uncased", //sup-simcse-
+                "--model_name_or_path","sup-simcse-bert-base-uncased", //sup-simcse-
                 "--pooler_type","cls",
                 "--temp","0.05",
                 // data_args
-                "--max_seq_length","32",
+                // "--max_seq_length","32",
+                "--max_seq_length","64",
                 // "--train_file","data/nli_for_simcse.csv",
-                "--train_file","data/verb_senses_for_simcse.csv",
+                // "--train_file","data/verb_senses_for_simcse.csv",
+                "--train_file","data/verb_test.csv",
                 // training_args
                 "--output_dir","result/my-sup-simcse-bert-base-uncased",
                 "--num_train_epochs","3",

@@ -56,9 +56,13 @@ def positive_negative_dataset_prepare(verb_sense_dict):
         ##一个verb的一个sense，多个句子两两组合
         temp_positive_negative_dataset = []
         if len(sense['examples']) > 1: #刨除只有一个example的sense    #############有多少个只有一个example的sense
-            pos_sense_examples = list(itertools.product(sense['examples'], sense['examples'])) 
-            pos_filtered_sense_examples = list(filter(remove_pair_same_exmple, pos_sense_examples))
+            pos_filtered_sense_examples = list(itertools.combinations(sense['examples'], r =2)) 
             for pos_filtered_sense_example in pos_filtered_sense_examples:
+                ##添加prompt提示词
+                pos_filtered_sense_example = list(pos_filtered_sense_example)
+                pos_filtered_sense_example[0] += " The center word is {}.".format(verb_sense_dict['lemma'].split('-')[0])
+                pos_filtered_sense_example[1] += " The center word is {}.".format(verb_sense_dict['lemma'].split('-')[0])
+
                 temp_positive_negative_dataset.append({pos_filtered_sense_example[0]:verb_sense_dict['lemma'] + str(index), pos_filtered_sense_example[1]:verb_sense_dict['lemma'] + str(index)})
 
             ##negative sentence ready, 非当前sense的其他sense的所有句子
@@ -66,6 +70,8 @@ def positive_negative_dataset_prepare(verb_sense_dict):
             for index2, sense2 in enumerate(verb_sense_dict['senses']):
                 if index != index2:
                     for sentence_example in sense2['examples']:
+                        ##添加prompt提示词
+                        sentence_example += " The center word is {}.".format(verb_sense_dict['lemma'].split('-')[0])
                         neg_sentence.append({sentence_example:verb_sense_dict['lemma'] + str(index2)})
 
             ##加上negative sentence
