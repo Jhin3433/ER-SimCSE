@@ -6,3 +6,4 @@ demo/
 SentEval/
 *.log
 __pycache__/
+LDCCorpus/

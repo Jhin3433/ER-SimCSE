@@ -457,7 +457,7 @@ def main():
             token = sentence.strip().split(' ')[-1].strip('.')  # 按照空格进行分词
             subword = tokenizer(token)['input_ids'][1:-1]
             match_result = match(subword, sent_features['input_ids'][index])
-            sent_features['verb_location'].append(match_result * int(data_args.max_seq_length / 2))
+            sent_features['verb_location'].append(match_result)
 #----------------------------------------添加verb位置索引#----------------------------------------     
 
         features = {}
@@ -491,7 +491,7 @@ def main():
         mlm_probability: float = data_args.mlm_probability
 
         def __call__(self, features: List[Dict[str, Union[ List[int], List[List[int]], torch.Tensor]] ]) -> Dict[str, torch.Tensor]:
-            special_keys = ['input_ids', 'attention_mask', 'token_type_ids', 'verb_index' 'mlm_input_ids', 'mlm_labels']
+            special_keys = ['input_ids', 'attention_mask', 'token_type_ids', 'verb_location', 'mlm_input_ids', 'mlm_labels']
             bs = len(features)
             if bs > 0:
                 num_sent = len(features[0]['input_ids'])
@@ -511,6 +511,13 @@ def main():
             )
             if model_args.do_mlm:
                 batch["mlm_input_ids"], batch["mlm_labels"] = self.mask_tokens(batch["input_ids"])
+
+            if 'verb_location' in batch.keys():#新加verb_location
+                zero_verb_location = torch.zeros_like(batch['input_ids'])  
+                for index, single_sentence_verb_location in enumerate(batch['verb_location']):  
+                    for i in range(single_sentence_verb_location[1]):
+                        zero_verb_location[index][single_sentence_verb_location[0] + i] = 1
+                batch['verb_location'] = zero_verb_location
 
             batch = {k: batch[k].view(bs, num_sent, -1) if k in special_keys else batch[k].view(bs, num_sent, -1)[:, 0] for k in batch}
 
@@ -574,7 +581,7 @@ def main():
     #     tokenizer=tokenizer,
     #     data_collator=data_collator,
     # )
-    # trainer.model_args = model_args
+    trainer.model_args = model_args
 
     # Training
     if training_args.do_train:

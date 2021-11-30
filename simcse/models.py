@@ -54,19 +54,25 @@ class Pooler(nn.Module):
     'avg': average of the last layers' hidden states at each token.
     'avg_top2': average of the last two layers.
     'avg_first_last': average of the first and the last layers.
+    'verb_emb': the embedding of verb.
     """
     def __init__(self, pooler_type):
         super().__init__()
         self.pooler_type = pooler_type
-        assert self.pooler_type in ["cls", "cls_before_pooler", "avg", "avg_top2", "avg_first_last"], "unrecognized pooling type %s" % self.pooler_type
+        assert self.pooler_type in ["cls", "cls_before_pooler", "avg", "avg_top2", "avg_first_last", "verb_emb"], "unrecognized pooling type %s" % self.pooler_type
 
-    def forward(self, attention_mask, outputs):
+    def forward(self, attention_mask, outputs , verb_location = None):  ##新加verb_location
         last_hidden = outputs.last_hidden_state
         pooler_output = outputs.pooler_output
         hidden_states = outputs.hidden_states
 
         if self.pooler_type in ['cls_before_pooler', 'cls']:
             return last_hidden[:, 0]
+        elif self.pooler_type == "verb_emb" and verb_location != None:  ##新加verb_location
+            return ((last_hidden * verb_location.unsqueeze(-1)).sum(1) / verb_location.sum(-1).unsqueeze(-1))
+        elif self.pooler_type == "verb_emb" and verb_location == None:  ##新加verb_location,eval模式中，取各向量的平均
+            return last_hidden[:, 0]
+            # return ((last_hidden * attention_mask.unsqueeze(-1)).sum(1) / attention_mask.sum(-1).unsqueeze(-1))
         elif self.pooler_type == "avg":
             return ((last_hidden * attention_mask.unsqueeze(-1)).sum(1) / attention_mask.sum(-1).unsqueeze(-1))
         elif self.pooler_type == "avg_first_last":
@@ -89,7 +95,7 @@ def cl_init(cls, config):
     """
     cls.pooler_type = cls.model_args.pooler_type
     cls.pooler = Pooler(cls.model_args.pooler_type)
-    if cls.model_args.pooler_type == "cls":
+    if cls.model_args.pooler_type == "cls" or "verb_emb": #新加verb_location
         cls.mlp = MLPLayer(config)
     cls.sim = Similarity(temp=cls.model_args.temp)
     cls.init_weights()
@@ -99,6 +105,7 @@ def cl_forward(cls,
     input_ids=None,
     attention_mask=None,
     token_type_ids=None,
+    verb_location=None,#新加verb_location
     position_ids=None,
     head_mask=None,
     inputs_embeds=None,
@@ -122,6 +129,10 @@ def cl_forward(cls,
     attention_mask = attention_mask.view((-1, attention_mask.size(-1))) # (bs * num_sent len)
     if token_type_ids is not None: #这个是什么
         token_type_ids = token_type_ids.view((-1, token_type_ids.size(-1))) # (bs * num_sent, len)
+    
+    #新加verb_location
+    if verb_location is not None:
+        verb_location = verb_location.view((-1, verb_location.size(-1)))
 
     # Get raw embeddings
     outputs = encoder(
@@ -152,12 +163,15 @@ def cl_forward(cls,
         )
 
     # Pooling
-    pooler_output = cls.pooler(attention_mask, outputs)
+    if verb_location is not None:
+        pooler_output = cls.pooler(attention_mask, outputs, verb_location) ##新加verb_location
+    else:
+        pooler_output = cls.pooler(attention_mask, outputs) ##新加verb_location
     pooler_output = pooler_output.view((batch_size, num_sent, pooler_output.size(-1))) # (bs, num_sent, hidden)
 
     # If using "cls", we add an extra MLP layer
     # (same as BERT's original implementation) over the representation.
-    if cls.pooler_type == "cls":
+    if cls.pooler_type == "cls" or "verv_emb": ##新加verb_location，train模式拿到verb处平均emb，eval模式拿到各个词的平均emb
         pooler_output = cls.mlp(pooler_output)
 
     # Separate representation
@@ -235,6 +249,7 @@ def sentemb_forward(
     input_ids=None,
     attention_mask=None,
     token_type_ids=None,
+    verb_location=None,#新加verb_location
     position_ids=None,
     head_mask=None,
     inputs_embeds=None,
@@ -258,7 +273,7 @@ def sentemb_forward(
         return_dict=True,
     )
 
-    pooler_output = cls.pooler(attention_mask, outputs)
+    pooler_output = cls.pooler(attention_mask, outputs) #只返回last_hidden_state cls处embedding
     if cls.pooler_type == "cls" and not cls.model_args.mlp_only_train:
         pooler_output = cls.mlp(pooler_output)
 
@@ -278,7 +293,7 @@ class BertForCL(BertPreTrainedModel):
     def __init__(self, config, *model_args, **model_kargs):
         super().__init__(config)
         self.model_args = model_kargs["model_args"]
-        self.bert = BertModel(config, add_pooling_layer=False)
+        self.bert = BertModel(config, add_pooling_layer=False) #因为这句所以没有[cls]输出
 
         if self.model_args.do_mlm:
             self.lm_head = BertLMPredictionHead(config)
@@ -289,6 +304,7 @@ class BertForCL(BertPreTrainedModel):
         input_ids=None,
         attention_mask=None,
         token_type_ids=None,
+        verb_location=None,#新加verb_location
         position_ids=None,
         head_mask=None,
         inputs_embeds=None,
@@ -305,6 +321,7 @@ class BertForCL(BertPreTrainedModel):
                 input_ids=input_ids,
                 attention_mask=attention_mask,
                 token_type_ids=token_type_ids,
+                verb_location=verb_location,#新加verb_location
                 position_ids=position_ids,
                 head_mask=head_mask,
                 inputs_embeds=inputs_embeds,
@@ -318,6 +335,7 @@ class BertForCL(BertPreTrainedModel):
                 input_ids=input_ids,
                 attention_mask=attention_mask,
                 token_type_ids=token_type_ids,
+                verb_location=verb_location,#新加verb_location
                 position_ids=position_ids,
                 head_mask=head_mask,
                 inputs_embeds=inputs_embeds,
@@ -348,6 +366,7 @@ class RobertaForCL(RobertaPreTrainedModel):
         input_ids=None,
         attention_mask=None,
         token_type_ids=None,
+        verb_location=None, #新加verb_location
         position_ids=None,
         head_mask=None,
         inputs_embeds=None,
@@ -364,6 +383,7 @@ class RobertaForCL(RobertaPreTrainedModel):
                 input_ids=input_ids,
                 attention_mask=attention_mask,
                 token_type_ids=token_type_ids,
+                verb_location=verb_location,#新加verb_location
                 position_ids=position_ids,
                 head_mask=head_mask,
                 inputs_embeds=inputs_embeds,
@@ -377,6 +397,7 @@ class RobertaForCL(RobertaPreTrainedModel):
                 input_ids=input_ids,
                 attention_mask=attention_mask,
                 token_type_ids=token_type_ids,
+                verb_location=verb_location,#新加verb_location
                 position_ids=position_ids,
                 head_mask=head_mask,
                 inputs_embeds=inputs_embeds,

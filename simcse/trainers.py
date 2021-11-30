@@ -634,7 +634,7 @@ class Event_CLTrainer(CLTrainer):
                     if pred_scores[jj] > pred_scores[jj + 1]:
                         num_correct += 1
 
-                metrics = {"Hard_Similarity_num_correct" : float(num_correct / (len(pred_scores) / 2) )}
+                metrics = {"eval_Hard_Similarity" : float(num_correct / (len(pred_scores) / 2) )}
                 self.log(metrics)
             # elif task == 'Script Event Predictions':
             #     logging.debug('\n\n***** Eval task : Script Event Predictions*****\n\n')
