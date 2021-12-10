@@ -42,7 +42,7 @@
                 "--max_seq_length","32",
                 // "--max_seq_length","64",
                 // "--train_file","data/nli_for_simcse.csv",
-                "--train_file","data/verb_senses_for_simcse.csv",
+                // "--train_file","data/verb_senses_for_simcse.csv", 全部
                 // "--train_file","data/verb_test.csv",
 
 
