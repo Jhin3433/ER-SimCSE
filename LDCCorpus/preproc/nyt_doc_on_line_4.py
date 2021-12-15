@@ -3,7 +3,7 @@
 #       document is on a seperate line
 ################################################
 import sys
-
+import os
 def doc_on_line(filename, outfilename):
     infile = open(filename, 'r', encoding='utf-8')
     outfile = open(outfilename, 'w', encoding='utf-8')
@@ -42,8 +42,16 @@ def doc_on_line(filename, outfilename):
     outfile.close()
 
 if __name__ == "__main__":
-    # infile = sys.argv[1]
-    # outfile = sys.argv[2]
-    infile = "/home/SimCSE-main/LDCCorpus/gigaword_eng_5/data/nyt_ollie_3/1994.txt"
-    outfile = "/home/SimCSE-main/LDCCorpus/gigaword_eng_5/data/nyt_online_4/1994.txt"
+
+    # base_dir = "../gigaword_eng_5/data/nyt_ollie_3/"
+    # output_dir = "../gigaword_eng_5/data/nyt_online_4/"
+    # g = os.walk(base_dir, followlinks=True)  
+    # for path,dir_list,file_list in g:  
+    #     for file in file_list:
+    #         infile = os.path.join(base_dir, file)
+    #         outfile = os.path.join(output_dir, file)
+    #         doc_on_line(infile, outfile)
+
+    infile = "/home/SimCSE-main/LDCCorpus/gigaword_eng_5/data/nyt_ollie_3/1997.txt"
+    outfile = "/home/SimCSE-main/LDCCorpus/gigaword_eng_5/data/nyt_online_4/1997.txt"
     doc_on_line(infile, outfile)

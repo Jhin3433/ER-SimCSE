@@ -12,8 +12,8 @@ if __name__ == '__main__':
         # 'data/nyt_ollie/1991.txt',
         # 'data/nyt_ollie/1992.txt',
         # 'data/nyt_ollie/1993.txt',
-        '../gigaword_eng_5/data/nyt_ollie_3/1994.txt',
-        # 'data/nyt_ollie/1995.txt',
+        '../gigaword_eng_5/data/nyt_ollie_3/1994.txt', ##未连接成one_line的svo , num_total = 2877182
+        '../gigaword_eng_5/data/nyt_ollie_3/1995.txt', ##num_total= 9714779
         # 'data/nyt_ollie/1996.txt',
         # 'data/nyt_ollie/1997.txt',
         # 'data/nyt_ollie/1998.txt',
@@ -34,7 +34,7 @@ if __name__ == '__main__':
     num_total = len(instances)
 
     def generate(num, output_file):
-        indices = random.sample(range(num_total), num)
+        indices = random.sample(range(num_total), num) #从num_total中随机挑选选取num---由num_dict定义
         samples = [instances[index] for index in indices]
         f = open(output_file, 'w')
         for line in samples:
@@ -53,8 +53,8 @@ if __name__ == '__main__':
 
 
         # 'data/nyt_final/1994_neg.txt': 5288859,
-        '../gigaword_eng_5/data/nyt_neg/1994_neg.txt': 5,
-
+        '../gigaword_eng_5/data/nyt_neg_5/1994_neg.txt': 5,##1994.txt的数据量
+        
         # 'data/nyt_final/1995_neg.txt': 5744247,
         # 'data/nyt_final/1996_neg.txt': 5772160,
         # 'data/nyt_final/1997_neg.txt': 5808079,
