@@ -5,6 +5,16 @@
     "version": "0.2.0",
     "configurations": [
         {
+            "type": "scala",
+            "request": "launch",
+            "name": "OpenExtract",
+            "mainClass": "OpenExtract",
+            "args": [],
+            "jvmOptions": [],
+            "env": {}
+        },
+
+        {
             "name": "Python: Current File",
             "type": "python",
             "request": "launch",

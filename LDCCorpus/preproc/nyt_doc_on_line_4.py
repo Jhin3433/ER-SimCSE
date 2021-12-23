@@ -42,7 +42,7 @@ def doc_on_line(filename, outfilename):
     outfile.close()
 
 if __name__ == "__main__":
-
+    #method 1: 根据nyt_ollie_3中的所有文件来进行one_line提取
     # base_dir = "../gigaword_eng_5/data/nyt_ollie_3/"
     # output_dir = "../gigaword_eng_5/data/nyt_online_4/"
     # g = os.walk(base_dir, followlinks=True)  
@@ -51,7 +51,11 @@ if __name__ == "__main__":
     #         infile = os.path.join(base_dir, file)
     #         outfile = os.path.join(output_dir, file)
     #         doc_on_line(infile, outfile)
-
-    infile = "/home/SimCSE-main/LDCCorpus/gigaword_eng_5/data/nyt_ollie_3/1997.txt"
-    outfile = "/home/SimCSE-main/LDCCorpus/gigaword_eng_5/data/nyt_online_4/1997.txt"
-    doc_on_line(infile, outfile)
+    
+    #method 2:根据命令行参数
+    for argv in sys.argv:
+        if ".py" in argv:
+            continue
+        infile = "../gigaword_eng_5/data/nyt_ollie_3/{}.txt".format(argv)
+        outfile = "../gigaword_eng_5/data/nyt_online_4/{}.txt".format(argv)
+        doc_on_line(infile, outfile)
