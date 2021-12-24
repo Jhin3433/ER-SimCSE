@@ -67,9 +67,10 @@ if __name__ == '__main__':
 
 
 
-    root_input_dir = '/home/SimCSE-main/LDCCorpus/gigaword_eng_5/data/nyt_eng_parse'
-    output_dir = '/home/SimCSE-main/LDCCorpus/gigaword_eng_5/data/nyt_eng_parse_2'
-
+    # root_input_dir = '/home/SimCSE-main/LDCCorpus/gigaword_eng_5/data/nyt_eng_parse'
+    root_input_dir = '../gigaword_eng_5/data/nyt_eng_parse'
+    # output_dir = '/home/SimCSE-main/LDCCorpus/gigaword_eng_5/data/nyt_eng_parse_2'
+    output_dir = '../gigaword_eng_5/data/nyt_eng_parse_2'
     for month_dir in os.listdir(root_input_dir):
         input_dir = os.path.join(root_input_dir, month_dir)
         day_dirs = glob.glob(os.path.join(input_dir, '*'))

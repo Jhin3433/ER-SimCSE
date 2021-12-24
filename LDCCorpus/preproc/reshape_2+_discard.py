@@ -1,10 +1,15 @@
 import os
 import glob
 import pathlib
-base_dir = "/home/SimCSE-main/LDCCorpus/gigaword_eng_5/data/nyt_eng_parse_2"
-output_dir = "/home/SimCSE-main/LDCCorpus/gigaword_eng_5/data/nyt_eng_parse_2+"
+# base_dir = "/home/SimCSE-main/LDCCorpus/gigaword_eng_5/data/nyt_eng_parse_2"
+base_dir = "../gigaword_eng_5/data/nyt_eng_parse_2"
+# output_dir = "/home/SimCSE-main/LDCCorpus/gigaword_eng_5/data/nyt_eng_parse_2+"
+output_dir = "../gigaword_eng_5/data/nyt_eng_parse_2+"
 # file_dir = "19940701_0001.txt"
 # output_file = open("19940701_0001_reshape.txt", 'w')
+
+#nyt_eng_parse_2中有的文件一行有多条句子，可能会影响ollie抽取结果。此代码用来将一行的多条句子 通过标点 拆分成一行只有一个句子
+#有瑕疵，不予使用
 
 for year in os.listdir(base_dir):
     for month in os.listdir(os.path.join(base_dir, year)):

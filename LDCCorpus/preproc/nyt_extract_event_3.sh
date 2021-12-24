@@ -1,10 +1,13 @@
 #1/bin/bash
 
-CLASSPATH=$CLASSPATH:/home/SimCSE-main/LDCCorpus/preproc/ollie-app-latest.jar
+# CLASSPATH=$CLASSPATH:/home/SimCSE-main/LDCCorpus/preproc/ollie-app-latest.jar
+CLASSPATH=$CLASSPATH:./ollie-app-latest.jar
 CLASSPATH=$CLASSPATH:.
 
-INPUT_BASE=/home/SimCSE-main/LDCCorpus/gigaword_eng_5/data/nyt_eng_parse_2
-OUTPUT_BASE=/home/SimCSE-main/LDCCorpus/gigaword_eng_5/data/nyt_ollie_3
+# INPUT_BASE=/home/SimCSE-main/LDCCorpus/gigaword_eng_5/data/nyt_eng_parse_2
+INPUT_BASE=../gigaword_eng_5/data/nyt_eng_parse_2
+# OUTPUT_BASE=/home/SimCSE-main/LDCCorpus/gigaword_eng_5/data/nyt_ollie_3
+OUTPUT_BASE=../gigaword_eng_5/data/nyt_ollie_3
 
 export JAVA_OPTS="-Xmx10g"
 

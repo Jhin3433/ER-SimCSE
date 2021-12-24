@@ -6,4 +6,4 @@ demo/
 SentEval/
 *.log
 __pycache__/
-LDCCorpus/gigaword_eng_5/
+LDCCorpus/gigaword_eng_5/*
